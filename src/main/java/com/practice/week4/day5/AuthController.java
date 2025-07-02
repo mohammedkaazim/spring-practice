@@ -1,0 +1,43 @@
+package com.practice.week4.day5;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @PostMapping("/login")
+    public Map<String, String> login(@RequestParam String username, @RequestParam String password) {
+
+        Map<String, String> tokens = new HashMap<>();
+
+        if ("admin".equals(username) && "password".equals(password)) {
+            tokens.put("accessToken", jwtUtil.generateAccessToken(username, "ADMIN"));
+            tokens.put("refreshToken", jwtUtil.generateRefreshToken(username));
+        } else if ("user".equals(username) && "password".equals(password)) {
+            tokens.put("accessToken", jwtUtil.generateAccessToken(username, "USER"));
+            tokens.put("refreshToken", jwtUtil.generateRefreshToken(username));
+        } else {
+            tokens.put("error", "Invalid credentials");
+        }
+
+        return tokens;
+    }
+
+    @PostMapping("/refresh")
+    public String refresh(@RequestParam String refreshToken) {
+        try {
+            String username = jwtUtil.validateToken(refreshToken);
+            return jwtUtil.generateAccessToken(username, "USER"); // Default USER role for demo
+        } catch (Exception e) {
+            return "Invalid Refresh Token";
+        }
+    }
+}
